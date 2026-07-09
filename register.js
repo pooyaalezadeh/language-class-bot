@@ -1,6 +1,5 @@
 const fs = require("fs");
-
-const FILE = "./database/users.json";
+const FILE = "./users.json";
 
 
 class Register {
