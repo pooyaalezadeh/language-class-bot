@@ -1,27 +1,32 @@
+require("dotenv").config();
+
+const axios = require("axios");
+const fs = require("fs");
+const FormData = require("form-data");
+
+// ==================== Database ====================
 const welcomeFile = "./database/welcome.json";
 const usersFile = "./database/users_list.json";
 
 let users = [];
 let welcomedUsers = [];
 
-// ساخت پوشه database اگر وجود نداشت
 if (!fs.existsSync("./database")) {
   fs.mkdirSync("./database");
 }
 
-// ساخت فایل users_list.json اگر وجود نداشت
 if (!fs.existsSync(usersFile)) {
   fs.writeFileSync(usersFile, "[]");
 } else {
   users = JSON.parse(fs.readFileSync(usersFile));
 }
 
-// ساخت فایل welcome.json اگر وجود نداشت
 if (!fs.existsSync(welcomeFile)) {
   fs.writeFileSync(welcomeFile, "[]");
 } else {
   welcomedUsers = JSON.parse(fs.readFileSync(welcomeFile));
 }
+
 function saveUsers() {
   fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
 }
@@ -30,6 +35,20 @@ function saveWelcome() {
   fs.writeFileSync(welcomeFile, JSON.stringify(welcomedUsers, null, 2));
 }
 
+// ==================== Config & Data ====================
+const config = {
+  BOT: {
+    TOKEN: process.env.BOT_TOKEN,
+    API: `https://tapi.bale.ai/bot${process.env.BOT_TOKEN}`
+  },
+  ADMIN: {
+    ID: "YOUR_ADMIN_CHAT_ID"
+  }
+};
+
+// داده‌ها، کیبورد، کلاس Game و Register رو از کد قبلی‌ات اینجا قرار بده
+
+// ==================== توابع ====================
 async function send(chatId, text) {
   try {
     await axios.post(config.BOT.API + "/sendMessage", {
@@ -47,6 +66,10 @@ async function send(chatId, text) {
 
 const game = new Game(send);
 const register = new Register(send);
+
+let offset = 0;
+let isProcessing = false;
+let processedMessages = new Set();
 
 async function getUpdates() {
   if (isProcessing) return;
