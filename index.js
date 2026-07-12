@@ -9,6 +9,9 @@ const scheduler = require("./scheduler");
 const Game = require("./game");
 
 const config = require("./config");
+console.log("BOT TOKEN =", config.BOT.TOKEN);
+console.log("BOT API =", config.BOT.API);
+console.log("ADMIN ID =", config.ADMIN.ID);
 const data = require("./data");
 const keyboard = require("./keyboard");
 const Register = require("./register");
