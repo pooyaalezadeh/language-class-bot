@@ -2,53 +2,57 @@ require("dotenv").config();
 
 const axios = require("axios");
 const fs = require("fs");
-const FormData = require("form-data");
 
-// ==================== Database ====================
 const welcomeFile = "./database/welcome.json";
 const usersFile = "./database/users_list.json";
 
 let users = [];
 let welcomedUsers = [];
 
-if (!fs.existsSync("./database")) {
-  fs.mkdirSync("./database");
-}
-
-if (!fs.existsSync(usersFile)) {
-  fs.writeFileSync(usersFile, "[]");
-} else {
-  users = JSON.parse(fs.readFileSync(usersFile));
-}
-
-if (!fs.existsSync(welcomeFile)) {
-  fs.writeFileSync(welcomeFile, "[]");
-} else {
-  welcomedUsers = JSON.parse(fs.readFileSync(welcomeFile));
-}
+if (!fs.existsSync("./database")) fs.mkdirSync("./database");
+if (!fs.existsSync(usersFile)) fs.writeFileSync(usersFile, "[]");
+else users = JSON.parse(fs.readFileSync(usersFile));
+if (!fs.existsSync(welcomeFile)) fs.writeFileSync(welcomeFile, "[]");
+else welcomedUsers = JSON.parse(fs.readFileSync(welcomeFile));
 
 function saveUsers() {
   fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
 }
-
 function saveWelcome() {
   fs.writeFileSync(welcomeFile, JSON.stringify(welcomedUsers, null, 2));
 }
 
-// ==================== Config & Data ====================
 const config = {
   BOT: {
     TOKEN: process.env.BOT_TOKEN,
     API: `https://tapi.bale.ai/bot${process.env.BOT_TOKEN}`
   },
-  ADMIN: {
-    ID: "YOUR_ADMIN_CHAT_ID"
-  }
+  ADMIN: { ID: "YOUR_ADMIN_CHAT_ID" }
 };
 
-// داده‌ها، کیبورد، کلاس Game و Register رو از کد قبلی‌ات اینجا قرار بده
+const keyboard = {
+  mainKeyboard: [
+    ["📝 ثبت‌نام", "📚 کلاس‌ها"],
+    ["📍 آدرس", "👩‍🏫 استاد"],
+    ["📞 تماس", "💰 شهریه"],
+    ["🇬🇧 جمله انگیزشی روز", "🎮 بازی لغات"]
+  ]
+};
 
-// ==================== توابع ====================
+const data = {
+  classes: "📅 کلاس‌ها همه روزه (روزهای زوج و فرد) برگزار می‌شود.",
+  address: "📍 آدرس: باغ فیض، کوچه چهارم",
+  teacher: "👩‍🏫 مدرس: مریم بقایی",
+  phone: "📞 شماره تماس: 09102303779",
+  prices: "💰 شهریه‌ها:\n🇬🇧 آیلتس: 3,000,000 تومان\n👨‍🏫 کلاس خصوصی: 2,000,000 تومان\n📝 کلاس خصوصی جبرانی: 700,000 تومان"
+};
+
+const motivations = [
+  "موفقیت از تلاش مداوم می‌آید.",
+  "هر روز یک قدم کوچک به سمت هدف.",
+  "یادگیری زبان، باز کردن درهای جدید است."
+];
+
 async function send(chatId, text) {
   try {
     await axios.post(config.BOT.API + "/sendMessage", {
@@ -64,12 +68,8 @@ async function send(chatId, text) {
   }
 }
 
-const game = new Game(send);
-const register = new Register(send);
-
 let offset = 0;
 let isProcessing = false;
-let processedMessages = new Set();
 
 async function getUpdates() {
   if (isProcessing) return;
@@ -82,9 +82,6 @@ async function getUpdates() {
     for (const update of updates) {
       offset = update.update_id + 1;
       if (!update.message) continue;
-      if (processedMessages.has(update.update_id)) continue;
-
-      processedMessages.add(update.update_id);
 
       const chatId = update.message.chat.id;
       const text = update.message.text || "";
@@ -94,94 +91,22 @@ async function getUpdates() {
         saveUsers();
       }
 
-      console.log("📩", text);
-
-      const registering = await register.process(chatId, text);
-      if (registering) continue;
-
-      const playing = await game.check(chatId, text);
-      if (playing) continue;
-
       if (text === "/start") {
         if (!welcomedUsers.includes(chatId)) {
           welcomedUsers.push(chatId);
           saveWelcome();
-
-          await send(
-            chatId,
-            `👋 سلام
-
-به ربات آموزشگاه زبان سپید خوش آمدید.
-
-از طریق این ربات می‌توانید:
-
-✅ ثبت‌نام کنید
-✅ شهریه را ببینید
-✅ اطلاعات کلاس‌ها را دریافت کنید
-✅ مطالب آموزشی انگلیسی بخوانید
-
-👇 لطفاً از منوی زیر گزینه موردنظر خود را انتخاب کنید.`
-          );
-
-          await send(
-            chatId,
-            `📌 اطلاعات آموزشگاه
-            
-📅 کلاس‌ها:
-همه روزه (روزهای زوج و فرد)
-            
-📍 آدرس:
-باغ فیض، کوچه چهارم
-            
-👩‍🏫 مدرس:
-مریم بقایی
-            
-📞 شماره تماس:
-09102303779
-            
-💰 شهریه‌ها:
-            
-🇬🇧 آیلتس: 3,000,000 تومان
-👨‍🏫 کلاس خصوصی: 2,000,000 تومان
-📝 کلاس خصوصی جبرانی: 700,000 تومان`
-          );
+          await send(chatId, `👋 سلام\n\nبه ربات آموزشگاه زبان سپید خوش آمدید.`);
+          await send(chatId, `📌 اطلاعات آموزشگاه\n\n📅 کلاس‌ها: همه روزه\n📍 آدرس: باغ فیض، کوچه چهارم\n👩‍🏫 مدرس: مریم بقایی\n📞 تماس: 09102303779\n💰 شهریه: آیلتس ۳ میلیون، خصوصی ۲ میلیون`);
         }
       } 
-      else if (text === "📝 ثبت‌نام") {
-        await register.start(chatId);
-      } 
-      else if (text === "📚 کلاس‌ها") {
-        await send(chatId, data.classes);
-      } 
-      else if (text === "📍 آدرس") {
-        await send(chatId, data.address);
-      } 
-      else if (text === "👩‍🏫 استاد") {
-        await send(chatId, data.teacher);
-      } 
-      else if (text === "📞 تماس") {
-        await send(chatId, data.phone);
-      } 
-      else if (text === "💰 شهریه") {
-        await send(chatId, data.prices);
-      } 
+      else if (text === "📚 کلاس‌ها") await send(chatId, data.classes);
+      else if (text === "📍 آدرس") await send(chatId, data.address);
+      else if (text === "👩‍🏫 استاد") await send(chatId, data.teacher);
+      else if (text === "📞 تماس") await send(chatId, data.phone);
+      else if (text === "💰 شهریه") await send(chatId, data.prices);
       else if (text === "🇬🇧 جمله انگیزشی روز") {
         const random = motivations[Math.floor(Math.random() * motivations.length)];
         await send(chatId, random);
-      } 
-      else if (text === "🎮 بازی لغات") {
-        await game.start(chatId);
-      } 
-      else if (text === "📢 انگیزشی") {
-        const random = data.motivational[Math.floor(Math.random() * data.motivational.length)];
-        await send(chatId, random);
-      } 
-      else if (text === "⚙️ پنل مدیریت") {
-        if (String(chatId) !== String(config.ADMIN.ID)) {
-          await send(chatId, "⛔ شما دسترسی به پنل مدیریت ندارید.");
-        } else {
-          await send(chatId, `⚙️ پنل مدیریت\n\n1️⃣ 👥 تعداد کاربران\n...`);
-        }
       } 
       else {
         await send(chatId, "لطفاً از منوی ربات انتخاب کنید 👇");
@@ -194,6 +119,5 @@ async function getUpdates() {
   }
 }
 
-console.log("🚀 Language Bot PRO Started");
-scheduler(send);
+console.log("🚀 Bot Started");
 setInterval(getUpdates, 1000);
