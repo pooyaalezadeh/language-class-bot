@@ -1,34 +1,27 @@
-require("dotenv").config();
-
-const axios = require("axios");
-const fs = require("fs");
-const FormData = require("form-data");
-const motivations = require("./motivations");
-const scheduler = require("./scheduler");
-const Game = require("./game");
-
-const config = require("./config");
-const data = require("./data");
-const keyboard = require("./keyboard");
-const Register = require("./register");
-
-let offset = 0;
-let processedMessages = new Set();
-let isProcessing = false;
-
 const welcomeFile = "./database/welcome.json";
 const usersFile = "./database/users_list.json";
 
 let users = [];
 let welcomedUsers = [];
 
-if (fs.existsSync(welcomeFile)) {
-  welcomedUsers = JSON.parse(fs.readFileSync(welcomeFile));
+// ساخت پوشه database اگر وجود نداشت
+if (!fs.existsSync("./database")) {
+  fs.mkdirSync("./database");
 }
-if (fs.existsSync(usersFile)) {
+
+// ساخت فایل users_list.json اگر وجود نداشت
+if (!fs.existsSync(usersFile)) {
+  fs.writeFileSync(usersFile, "[]");
+} else {
   users = JSON.parse(fs.readFileSync(usersFile));
 }
 
+// ساخت فایل welcome.json اگر وجود نداشت
+if (!fs.existsSync(welcomeFile)) {
+  fs.writeFileSync(welcomeFile, "[]");
+} else {
+  welcomedUsers = JSON.parse(fs.readFileSync(welcomeFile));
+}
 function saveUsers() {
   fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
 }
