@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const axios = require("axios");
 const fs = require("fs");
+const cron = require("node-cron");
 
 const welcomeFile = "./database/welcome.json";
 const usersFile = "./database/users_list.json";
@@ -108,7 +109,16 @@ async function getUpdates() {
         const random = motivations[Math.floor(Math.random() * motivations.length)];
         await send(chatId, random);
       } 
+      
       else {
+        const dailyLessons = [
+          "📚 تمرین امروز:\n\nWord: Beautiful\nMeaning: زیبا\nExample: She has a beautiful smile.",
+        
+          "📚 تمرین امروز:\n\nWord: Improve\nMeaning: بهتر کردن\nExample: I want to improve my English.",
+        
+          "📚 تمرین امروز:\n\nWord: Success\nMeaning: موفقیت\nExample: Hard work leads to success."
+        ];
+
         await send(chatId, "لطفاً از منوی ربات انتخاب کنید 👇");
       }
     }
@@ -119,6 +129,19 @@ async function getUpdates() {
   }
 }
 
+cron.schedule("0 9 * * *", async () => {
+
+  const lesson = dailyLessons[
+    Math.floor(Math.random() * dailyLessons.length)
+  ];
+
+  for (const userId of users) {
+    await send(userId, lesson);
+  }
+
+  console.log("Daily lesson sent");
+
+});
 console.log("🚀 Bot Started");
 setInterval(getUpdates, 1000);
 const express = require("express");
