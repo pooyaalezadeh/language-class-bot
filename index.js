@@ -167,7 +167,7 @@ error.response?.data || error.message
 }
 
 
-let offset = 0;
+let offset = -1;
 let isProcessing = false;
 async function getUpdates(){
 
@@ -184,6 +184,9 @@ async function getUpdates(){
   
   
   const updates = result.data.result || [];
+  if(updates.length > 0){
+    offset = updates[updates.length - 1].update_id + 1;
+  }
   
   
   for(const update of updates){
