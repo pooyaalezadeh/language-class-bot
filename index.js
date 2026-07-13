@@ -69,7 +69,7 @@ async function send(chatId, text) {
   }
 }
 
-let offset = 0;
+let offset = -1;
 let isProcessing = false;
 
 async function getUpdates() {
