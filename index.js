@@ -1,6 +1,7 @@
 require("dotenv").config();
 
 const axios = require("axios");
+const OpenAI = require("openai");
 const fs = require("fs");
 const cron = require("node-cron");
 const express = require("express");
@@ -38,6 +39,9 @@ const config = {
     API: `https://tapi.bale.ai/bot${process.env.BOT_TOKEN}`
   }
 };
+const ai = new OpenAI({
+  apiKey: process.env.AI_KEY
+});
 
 
 
@@ -173,6 +177,43 @@ error.response?.data || error.message
 }
 
 }
+async function askAI(question){
+
+  try{
+  
+  const response = await ai.chat.completions.create({
+  
+  model: "gpt-4o-mini",
+  
+  messages:[
+  {
+  role:"system",
+  content:"تو دستیار هوشمند آموزشگاه زبان سپید هستی. فارسی و دوستانه جواب بده."
+  },
+  {
+  role:"user",
+  content: question
+  }
+  ]
+  
+  });
+  
+  
+  return response.choices[0].message.content;
+  
+  
+  }catch(error){
+  
+  console.log(
+  "AI ERROR:",
+  error.message
+  );
+  
+  return "فعلاً پاسخ هوشمند در دسترس نیست.";
+  
+  }
+  
+  }
 let isProcessing = false;
 
 async function handleUpdate(update){
@@ -344,15 +385,11 @@ async function handleUpdate(update){
   
   else{
 
-    const reply =
-    randomReplies[
-    Math.floor(Math.random()*randomReplies.length)
-    ];
-    
-    await send(chatId, reply);
-    
-    }
+    const answer = await askAI(text);
 
+    await send(chatId, answer);
+
+}
 }catch(error){
   
   console.log(
