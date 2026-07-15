@@ -38,7 +38,7 @@ const config = {
     API: `https://tapi.bale.ai/bot${process.env.BOT_TOKEN}`
   }
 };
-console.log("TOKEN CHECK:", config.BOT.TOKEN);
+
 
 
 const keyboard = {
@@ -166,11 +166,12 @@ error.response?.data || error.message
 }
 
 }
-
-
-let offset = 0;
 let isProcessing = false;
-async function getUpdates(){
+
+async function handleUpdate(update){
+
+
+
 
   if(isProcessing) return;
   
@@ -179,26 +180,11 @@ async function getUpdates(){
   
   try{
   
-  const result = await axios.get(
-  config.BOT.API + "/getUpdates?offset=" + offset
-  );
-  
-  
-  const updates = result.data.result || [];
 
-console.log("UPDATES:", updates.length);
 
-if(updates.length > 0){
-  offset = updates[updates.length - 1].update_id + 1;
-}
-  
-  for(const update of updates){
   
   
-  offset = update.update_id + 1;
-  
-  
-  if(!update.message) continue;
+    if(!update || !update.message) return;
   
   
   const chatId = update.message.chat.id;
@@ -350,21 +336,14 @@ if(updates.length > 0){
   
   
   else{
-  
-  
-  await send(chatId,
-  "لطفاً از منوی ربات انتخاب کنید 👇"
-  );
-  
-  
+
+    await send(chatId,
+    "لطفاً از منوی ربات انتخاب کنید 👇"
+    );
+
   }
-  
-  
-  }
-  
-  
-  
-  }catch(error){
+
+}catch(error){
   
   console.log(
   "UPDATE ERROR:",
@@ -415,24 +394,30 @@ if(updates.length > 0){
   console.log("🚀 Bot Started");
   
   
-  setInterval(getUpdates,1500);
+
   
   
   
   
   
   // Web Server برای Render
-  
   const app = express();
-  
+
+  app.use(express.json());
   
   app.get("/",(req,res)=>{
-  
-  res.send("Language Bot is Running");
-  
+    res.send("Language Bot is Running");
   });
   
+  app.post("/webhook", async (req,res)=>{
+    const update = req.body;
   
+    console.log("NEW UPDATE:", update);
+  
+    await handleUpdate(update);
+  
+    res.sendStatus(200);
+  });
   app.listen(
   process.env.PORT || 3000,
   ()=>{
