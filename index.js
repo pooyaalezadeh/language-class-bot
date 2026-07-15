@@ -108,6 +108,13 @@ const motivations = [
 "📚 هر روز یک کلمه جدید یاد بگیر.",
 "🇬🇧 زبان انگلیسی دریچه‌ای به فرصت‌های جدید است."
 ];
+const randomReplies = [
+  "😊 ممنون که پیام دادی. چطور می‌تونم کمکت کنم؟",
+  "🇬🇧 یادگیری زبان با تمرین روزانه قوی‌تر می‌شود.",
+  "📚 اگر سوالی درباره کلاس‌ها داری از منوی ربات انتخاب کن.",
+  "🌱 هر روز یک قدم برای پیشرفت زبان بردار.",
+  "✨ عالیه! ادامه بده، موفقیت نزدیکه."
+  ];
 
 
 const dailyLessons = [
@@ -337,11 +344,14 @@ async function handleUpdate(update){
   
   else{
 
-    await send(chatId,
-    "لطفاً از منوی ربات انتخاب کنید 👇"
-    );
-
-  }
+    const reply =
+    randomReplies[
+    Math.floor(Math.random()*randomReplies.length)
+    ];
+    
+    await send(chatId, reply);
+    
+    }
 
 }catch(error){
   
