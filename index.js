@@ -42,6 +42,7 @@ const config = {
 const ai = new OpenAI({
   apiKey: process.env.AI_KEY
 });
+console.log("AI KEY:", process.env.AI_KEY ? "FOUND" : "NOT FOUND");
 
 
 
