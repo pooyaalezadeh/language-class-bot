@@ -1,7 +1,7 @@
 require("dotenv").config();
 
 const axios = require("axios");
-const OpenAI = require("openai");
+
 const fs = require("fs");
 const cron = require("node-cron");
 const express = require("express");
@@ -39,9 +39,7 @@ const config = {
     API: `https://tapi.bale.ai/bot${process.env.BOT_TOKEN}`
   }
 };
-const ai = new OpenAI({
-  apiKey: process.env.AI_KEY
-});
+
 console.log("AI KEY:", process.env.AI_KEY ? "FOUND" : "NOT FOUND");
 
 
@@ -181,40 +179,48 @@ error.response?.data || error.message
 async function askAI(question){
 
   try{
-  
-  const response = await ai.chat.completions.create({
-  
-  model: "gpt-4o-mini",
-  
-  messages:[
-  {
-  role:"system",
-  content:"تو دستیار هوشمند آموزشگاه زبان سپید هستی. فارسی و دوستانه جواب بده."
-  },
-  {
-  role:"user",
-  content: question
-  }
-  ]
-  
-  });
-  
-  
-  return response.choices[0].message.content;
-  
-  
+
+    const response = await axios.post(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        model: "openai/gpt-4o-mini",
+        messages:[
+          {
+            role:"system",
+            content:"تو دستیار هوشمند آموزشگاه زبان سپید هستی. فارسی و دوستانه جواب بده."
+          },
+          {
+            role:"user",
+            content: question
+          }
+        ]
+      },
+      {
+        headers:{
+          Authorization:`Bearer ${process.env.AI_KEY}`,
+          "Content-Type":"application/json",
+          "HTTP-Referer":"https://language-class-bot-2.onrender.com",
+          "X-Title":"Language Sefid Bot"
+        }
+      }
+    );
+
+
+    return response.data.choices[0].message.content;
+
+
   }catch(error){
 
     console.log(
-    "AI ERROR:",
-    error.response?.data || error.message
+      "AI ERROR:",
+      error.response?.data || error.message
     );
-  
-    return "خطای AI: " + (error.message || "unknown");
-  
+
+    return "خطای AI: " + (error.response?.data?.error?.message || error.message);
+
   }
-  
-  }
+
+}
 let isProcessing = false;
 
 async function handleUpdate(update){
