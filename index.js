@@ -204,13 +204,13 @@ async function askAI(question){
   
   
   }catch(error){
+
+    console.log(
+    "AI ERROR:",
+    error.response?.data || error.message
+    );
   
-  console.log(
-  "AI ERROR:",
-  error.message
-  );
-  
-  return "فعلاً پاسخ هوشمند در دسترس نیست.";
+    return "خطای AI: " + (error.message || "unknown");
   
   }
   
