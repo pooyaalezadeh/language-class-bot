@@ -5,7 +5,7 @@ const fs = require("fs");
 const cron = require("node-cron");
 const express = require("express");
 
-const location = require("./features/location");
+
 const tetris = require("./features/tetris");
 
 
@@ -775,36 +775,6 @@ async function send(chatId,text){
   
   
   
-  else if(text==="📍 نقشه آموزشگاه"){
-  
-  
-  await send(
-  chatId,
-  location.text
-  );
-  
-  
-  
-  await axios.post(
-  
-  config.BOT.API+"/sendLocation",
-  
-  {
-  
-  chat_id:chatId,
-  
-  latitude:
-  location.latitude,
-  
-  longitude:
-  location.longitude
-  
-  }
-  
-  );
-  
-  
-  }
   
   
   
