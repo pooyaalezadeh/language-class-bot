@@ -316,6 +316,33 @@ async function handleUpdate(update){
     achievements: []
 }
   const text = update.message.text || "";
+    // سیستم ثبت نام
+if(!registerStates[chatId]){
+  registerStates[chatId] = {};
+}
+
+
+if(registerStates[chatId].step){
+
+  const result = register.process(
+    chatId,
+    text,
+    registerStates[chatId]
+  );
+
+
+  if(result){
+
+    await send(
+      chatId,
+      result
+    );
+
+    return;
+
+  }
+
+}
   if(registerStep[chatId]){
     if(registerStep[chatId].step === 4){
 
@@ -706,9 +733,22 @@ if (newLevel > profiles[chatId].level) {
   
   else if(text === "📝 ثبت‌نام"){
 
-    registerStep[chatId] = {
-      step: 1
-    };
+
+const result = register.start(chatId);
+
+
+registerStates[chatId] = {
+  step: result.step
+};
+
+
+await send(
+ chatId,
+ result.message
+);
+
+
+}
   
     await send(
       chatId,
