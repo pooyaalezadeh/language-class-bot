@@ -9,9 +9,8 @@ if(!fs.existsSync(file)){
 
 
 let registrations = JSON.parse(
-    fs.readFileSync(file)
+    fs.readFileSync(file, "utf8")
 );
-
 
 function save(){
 
