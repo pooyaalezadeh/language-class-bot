@@ -1,85 +1,168 @@
-const kb = require("./keyboard");
+const fs = require("fs");
 
-class Admin {
 
-    constructor(send, users, stats, logger) {
+const usersFile = "./database/users_list.json";
+const registerFile = "./database/register.json";
 
-        this.send = send;
-        this.users = users;
-        this.stats = stats;
-        this.logger = logger;
 
-    }
 
-    isAdmin(id) {
+function getUsers(){
 
-        return String(id) === String(process.env.ADMIN_ID);
+if(!fs.existsSync(usersFile)){
+return [];
+}
 
-    }
-
-    async panel(id) {
-
-        if (!this.isAdmin(id))
-            return;
-
-        await this.send(
-
-            id,
-
-`👑 پنل مدیریت
-
-به پنل مدیریت ربات خوش آمدید.
-
-یکی از گزینه‌های زیر را انتخاب کنید.`,
-
-            kb.admin
-
-        );
-
-    }
-
-    async usersCount(id) {
-
-        if (!this.isAdmin(id))
-            return;
-
-        const count = Object.keys(this.users).length;
-
-        await this.send(
-
-            id,
-
-            `👥 تعداد کاربران
-
-${count} نفر`
-
-        );
-
-    }
-
-    async statsInfo(id) {
-
-        if (!this.isAdmin(id))
-            return;
-
-        const s = this.stats.getStats();
-
-        await this.send(
-
-            id,
-
-`📊 آمار ربات
-
-👥 کاربران : ${s.totalUsers}
-
-💬 پیام ها : ${s.totalMessages}
-
-📝 ثبت نام : ${s.totalRegistrations}`
-
-        );
-
-    }
+return JSON.parse(
+fs.readFileSync(usersFile)
+);
 
 }
 
-module.exports = Admin;
+
+
+function getRegisters(){
+
+if(!fs.existsSync(registerFile)){
+return [];
+}
+
+return JSON.parse(
+fs.readFileSync(registerFile)
+);
+
+}
+
+
+
+
+module.exports = {
+
+
+
+panel(chatId,adminId){
+
+
+if(chatId != adminId){
+
+return "⛔ شما دسترسی مدیریت ندارید.";
+
+}
+
+
+
+let users = getUsers();
+
+let registers = getRegisters();
+
+
+
+return `
+👑 پنل مدیریت آموزشگاه سپید
+
+
+👥 تعداد کاربران:
+
+${users.length}
+
+
+📝 تعداد ثبت‌نام‌ها:
+
+${registers.length}
+
+
+
+دستورات مدیریت:
+
+📊 /stats
+📝 /registers
+
+`;
+
+},
+
+
+
+
+stats(chatId,adminId){
+
+
+if(chatId != adminId){
+
+return "⛔ دسترسی ندارید.";
+
+}
+
+
+let users=getUsers();
+
+
+return `
+📊 آمار ربات
+
+
+👥 کاربران:
+
+${users.length}
+
+
+🤖 وضعیت:
+
+فعال ✅
+`;
+
+},
+
+
+
+
+registers(chatId,adminId){
+
+
+if(chatId != adminId){
+
+return "⛔ دسترسی ندارید.";
+
+}
+
+
+let data=getRegisters();
+
+
+
+if(data.length===0){
+
+return "📝 هنوز ثبت‌نامی وجود ندارد.";
+
+}
+
+
+
+let text="📝 ثبت‌نام‌ها:\n\n";
+
+
+data.forEach((item,index)=>{
+
+
+text +=
+`
+${index+1}-
+👤 ${item.name}
+
+📞 ${item.phone}
+
+📚 ${item.course}
+
+----------------
+`;
+
+});
+
+
+return text;
+
+
+}
+
+
+
+};
