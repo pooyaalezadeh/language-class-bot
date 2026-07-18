@@ -5,9 +5,20 @@ const axios = require("axios");
 const fs = require("fs");
 const cron = require("node-cron");
 const express = require("express");
+const location = require("./features/location");
+const register = require("./features/register");
+const admin = require("./features/admin");
+const faq = require("./features/faq");
+const game = require("./features/game");
+const tetris = require("./features/tetris");
+const missions = require("./features/missions");
 
 const welcomeFile = "./database/welcome.json";
 const usersFile = "./database/users_list.json";
+const memoryFile = "./database/memory.json";
+const registerFile = "./database/registers.json";
+const gameFile = "./database/game_scores.json";
+const missionFile = "./database/missions.json";
 
 if (!fs.existsSync("./database")) {
   fs.mkdirSync("./database");
@@ -20,15 +31,49 @@ if (!fs.existsSync(usersFile)) {
 if (!fs.existsSync(welcomeFile)) {
   fs.writeFileSync(welcomeFile, "[]");
 }
+if (!fs.existsSync(memoryFile)) {
+  fs.writeFileSync(memoryFile, "{}");
+}
+if (!fs.existsSync(registerFile)) {
+  fs.writeFileSync(registerFile, "[]");
+}
+if (!fs.existsSync(gameFile)) {
+  fs.writeFileSync(gameFile, "{}");
+}
+
+
+if (!fs.existsSync(missionFile)) {
+  fs.writeFileSync(missionFile, "{}");
+}
 
 let users = JSON.parse(fs.readFileSync(usersFile));
 let welcomedUsers = JSON.parse(fs.readFileSync(welcomeFile));
+let registrations = JSON.parse(
+  fs.readFileSync(registerFile)
+  );
+
+
 
 function saveUsers() {
+  let memory = JSON.parse(fs.readFileSync(memoryFile));
   fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
 }
 
 function saveWelcome() {
+  function saveMemory() {
+    fs.writeFileSync(
+        memoryFile,
+        JSON.stringify(memory, null, 2)
+    );
+}
+function saveRegistrations(){
+
+  fs.writeFileSync(
+    registerFile,
+    JSON.stringify(registrations, null, 2)
+  );
+
+}
   fs.writeFileSync(welcomeFile, JSON.stringify(welcomedUsers, null, 2));
 }
 
@@ -46,12 +91,24 @@ console.log("AI KEY:", process.env.AI_KEY ? "FOUND" : "NOT FOUND");
 
 const keyboard = {
   mainKeyboard: [
-    ["📝 ثبت‌نام", "📚 کلاس‌ها"],
-    ["🎯 تعیین سطح", "📖 تمرین روزانه"],
-    ["📍 آدرس", "👩‍🏫 استاد"],
-    ["📞 تماس", "💰 شهریه"],
-    ["🇬🇧 جمله انگیزشی روز"]
+    [
+      "📞 تماس",
+      "💰 شهریه"
+    ],
+    [
+      "📍 نقشه آموزشگاه",
+      "🎮 بازی زبان"
+    ],
+    [
+      "🎮 بازی تتریس"
+    ],
+    [
+      "🇬🇧 جمله انگیزشی روز"
+    ]
   ]
+  [
+    "🏆 رتبه‌بندی"
+    ],
 };
 
 
@@ -222,6 +279,10 @@ async function askAI(question){
 
 }
 let isProcessing = false;
+let registerStates = {};
+let profiles = {};
+let memory = {};
+let registerStep = {};
 
 async function handleUpdate(update){
 
@@ -243,7 +304,288 @@ async function handleUpdate(update){
   
   
   const chatId = update.message.chat.id;
+  if (!profiles[chatId]) {
+    profiles[chatId] = {
+        id: chatId,
+        xp: 0,
+        level: 1,
+        games: 0,
+        lessons: 0,
+        register: false
+    };
+    achievements: []
+}
   const text = update.message.text || "";
+  if(registerStep[chatId]){
+    if(registerStep[chatId].step === 4){
+
+      registerStep[chatId].course = text;
+    
+    
+      registrations.push({
+    
+        userId: chatId,
+    
+        name: registerStep[chatId].name,
+    
+        age: registerStep[chatId].age,
+    
+        phone: registerStep[chatId].phone,
+    
+        course: registerStep[chatId].course,
+    
+        date: new Date().toLocaleString("fa-IR")
+    
+      });
+    
+    
+      saveRegistrations();
+    
+    
+      delete registerStep[chatId];
+    
+    
+      await send(
+        chatId,
+    `
+    ✅ ثبت‌نام شما با موفقیت انجام شد 🎉
+    
+    📝 اطلاعات شما ذخیره شد.
+    
+    📚 دوره:
+    ${text}
+    
+    مدیریت آموزشگاه به زودی با شما تماس می‌گیرد.
+    `
+      );
+    
+    
+      return;
+    
+    }
+    if(registerStep[chatId].step === 3){
+
+      registerStep[chatId].phone = text;
+    
+      registerStep[chatId].step = 4;
+    
+    
+      await send(
+        chatId,
+        `
+    ✅ شماره تماس ذخیره شد
+    
+    📚 لطفاً دوره مورد نظر خود را وارد کنید:
+    
+    گزینه‌ها:
+    🇬🇧 آیلتس
+    🗣 مکالمه انگلیسی
+    📖 گرامر
+    👨‍🏫 کلاس خصوصی
+    `
+      );
+    
+      return;
+    
+    }
+
+    if(registerStep[chatId].step === 1){
+  
+      registerStep[chatId].name = text;
+      registerStep[chatId].step = 2;
+  
+      await send(
+        chatId,
+        "🎂 سن خود را وارد کنید:"
+      );
+  
+      return;
+    }
+  
+  
+    if(registerStep[chatId].step === 2){
+      if(registerStep[chatId].step === 1){
+
+        registerStep[chatId].name = text;
+      
+        registerStep[chatId].step = 2;
+      
+      
+        await send(
+          chatId,
+          `
+      ✅ نام ذخیره شد
+      
+      🎂 لطفاً سن خود را وارد کنید:
+      `
+        );
+      
+        return;
+      
+      }
+      if(registerStep[chatId].step === 2){
+
+        registerStep[chatId].age = text;
+      
+        registerStep[chatId].step = 3;
+      
+      
+        await send(
+          chatId,
+          `
+      ✅ سن ذخیره شد
+      
+      📞 لطفاً شماره تماس خود را وارد کنید:
+      `
+        );
+      
+        return;
+      
+      }
+  
+      registerStep[chatId].age = text;
+      registerStep[chatId].step = 3;
+  
+      await send(
+        chatId,
+        "📞 شماره تماس خود را وارد کنید:"
+      );
+  
+      return;
+    }
+  
+  
+    if(registerStep[chatId].step === 3){
+  
+      registerStep[chatId].phone = text;
+      registerStep[chatId].step = 4;
+  
+      await send(
+        chatId,
+        "📚 دوره مورد نظر را وارد کنید:"
+      );
+  
+      return;
+    }
+  
+  
+    if(registerStep[chatId].step === 4){
+  
+      registerStep[chatId].course = text;
+  
+  
+      registrations.push({
+        user: chatId,
+        name: registerStep[chatId].name,
+        age: registerStep[chatId].age,
+        phone: registerStep[chatId].phone,
+        course: registerStep[chatId].course,
+        date: new Date()
+      });
+  
+  
+      saveRegistrations();
+  
+  
+      delete registerStep[chatId];
+  
+  
+      await send(
+        chatId,
+        `
+  ✅ ثبت‌نام شما انجام شد
+  
+  📝 اطلاعات شما ذخیره شد.
+  مدیریت آموزشگاه در اولین فرصت با شما تماس می‌گیرد.
+  `
+      );
+  
+      return;
+    }
+  
+  }
+  if (!memory[chatId]) {
+    memory[chatId] = {};
+}
+  // افزایش امتیاز کاربر
+profiles[chatId].xp += 5;
+// دستاوردها
+
+if(
+  profiles[chatId].xp >= 100 &&
+  !profiles[chatId].achievements.includes("🥉")
+  ){
+  
+  profiles[chatId].achievements.push("🥉");
+  
+  await send(
+  chatId,
+  `🏅 دستاورد جدید
+  
+  🥉 کاربر فعال
+  
+  تبریک!
+  اولین مدال خودت را گرفتی.`
+  );
+  
+  }
+  
+  if(
+  profiles[chatId].xp >= 500 &&
+  !profiles[chatId].achievements.includes("🥈")
+  ){
+  
+  profiles[chatId].achievements.push("🥈");
+  
+  await send(
+  chatId,
+  `🏅 دستاورد جدید
+  
+  🥈 زبان‌آموز حرفه‌ای
+  
+  تبریک!`
+  );
+  
+  }
+  
+  if(
+  profiles[chatId].xp >= 1000 &&
+  !profiles[chatId].achievements.includes("🥇")
+  ){
+  
+  profiles[chatId].achievements.push("🥇");
+  
+  await send(
+  chatId,
+  `🏆
+  
+  تبریک
+  
+  مدال طلایی گرفتی.`
+  );
+  
+  }
+
+// هر 100 امتیاز = یک سطح
+const newLevel = Math.floor(profiles[chatId].xp / 100) + 1;
+
+if (newLevel > profiles[chatId].level) {
+
+    profiles[chatId].level = newLevel;
+
+    await send(
+        chatId,
+        `🎉 تبریک!
+
+شما به سطح ${newLevel} رسیدید.
+
+🏆 جایزه:
+۵۰ امتیاز اضافه دریافت کردید.`
+    );
+
+    profiles[chatId].xp += 50;
+
+}
   
   
   
@@ -331,7 +673,27 @@ async function handleUpdate(update){
   await send(chatId,data.phone);
   
   }
-  
+  else if(text === "📍 نقشه آموزشگاه"){
+
+
+    await send(
+    chatId,
+    location.text
+    );
+    
+    
+    // ارسال لوکیشن
+    await axios.post(
+    config.BOT.API + "/sendLocation",
+    {
+    chat_id: chatId,
+    latitude: location.latitude,
+    longitude: location.longitude
+    }
+    );
+    
+    
+    }
   
   
   else if(text === "💰 شهریه"){
@@ -343,18 +705,96 @@ async function handleUpdate(update){
   
   
   else if(text === "📝 ثبت‌نام"){
+
+    registerStep[chatId] = {
+      step: 1
+    };
   
-  await send(chatId,data.register);
+    await send(
+      chatId,
+      `
+  📝 ثبت‌نام آموزشگاه زبان سپید
+  
+  لطفاً نام و نام خانوادگی خود را وارد کنید:
+  `
+    );
   
   }
   
   
   
   else if(text === "🎯 تعیین سطح"){
+    
   
   await send(chatId,data.level);
   
   }
+  else if(text === "🎮 بازی تتریس"){
+
+    profiles[chatId].games += 1;
+    
+    await send(
+    chatId,
+    tetris()
+    );
+    
+    }
+    else if(text === "🏆 رتبه‌بندی"){
+
+      let ranking = Object.entries(gameScores)
+      .sort((a,b)=>b[1]-a[1])
+      .slice(0,10);
+      
+      
+      if(ranking.length === 0){
+      
+      await send(
+      chatId,
+      "🏆 هنوز کسی بازی نکرده است."
+      );
+      
+      }else{
+      
+      
+      let textRank = "🏆 جدول برترین زبان‌آموزان\n\n";
+      
+      
+      ranking.forEach((user,index)=>{
+      
+      textRank +=
+      `${index+1} 🥇 شناسه: ${user[0]}\n⭐ امتیاز: ${user[1]}\n\n`;
+      
+      });
+      
+      
+      await send(
+      chatId,
+      textRank
+      );
+      
+      }
+      
+      }
+  else if(text.startsWith("هدف من ")){
+
+    const goal = text.replace("هدف من ","");
+    
+    if(!memory[chatId]){
+    memory[chatId] = {};
+    }
+    
+    memory[chatId].goal = goal;
+    
+    saveMemory();
+    
+    await send(
+    chatId,
+    `🎯 هدف شما ذخیره شد:
+    
+    ${goal}`
+    );
+    
+    }
   
   
   
@@ -374,23 +814,165 @@ async function handleUpdate(update){
   
   
   
-  else if(text === "🇬🇧 جمله انگیزشی روز"){
   
   
-  const msg =
-  motivations[
-  Math.floor(Math.random()*motivations.length)
-  ];
-  
-  
-  await send(chatId,msg);
-  
-  
-  }
-  
-  
-  
+  else if(text === "👤 پروفایل کاربر"){
+
+    let user = memory[chatId] || {};
+    
+    await send(
+    chatId,
+    `
+    👤 پروفایل شما
+    
+    📝 نام:
+    ${user.name || "ثبت نشده"}
+    
+    🎂 سن:
+    ${user.age || "ثبت نشده"}
+    
+    📚 دوره:
+    ${user.course || "ثبت نشده"}
+    
+    🎯 هدف:
+    ${user.goal || "ثبت نشده"}
+    
+    
+    🏆 سطح:
+    ${profiles[chatId]?.level || 1}
+    
+    ⭐ امتیاز:
+    ${profiles[chatId]?.xp || 0}
+    
+    `
+    );
+    
+    }
+  else if(text === "👤 پروفایل من"){
+
+    await send(chatId,
+    
+    `👤 پروفایل شما
+    ["👤 پروفایل من"]
+    🆔 شناسه:
+    ${profiles[chatId].id}
+    
+    ⭐ سطح:
+    ${profiles[chatId].level}
+    ⭐ امتیاز تا سطح بعد:
+
+${100 - (profiles[chatId].xp % 100)}
+    
+    🏆 امتیاز:
+    ${profiles[chatId].xp}
+    
+    🎮 بازی انجام شده:
+    ${profiles[chatId].games}
+    
+    📚 تمرین‌های خوانده شده:
+    ${profiles[chatId].lessons}
+    
+    📝 ثبت نام:
+    🏅 مدال‌ها
+
+${profiles[chatId].achievements.join(" ") || "ندارد"}
+    ${profiles[chatId].register ? "✅ انجام شده" : "❌ انجام نشده"}
+    `);
+    
+    }
+    else if(text.startsWith("اسم من ")){
+
+      const name = text.replace("اسم من ","");
+      
+      memory[chatId].name = name;
+      saveMemory();
+      
+      await send(
+      chatId,
+      `😊 خوشبختم ${name}
+      
+      اسم شما را به خاطر سپردم.`
+      );
+      
+      }
+      
+      else if(text === "اسم من چیه؟"){
+      
+      if(memory[chatId].name){
+      
+      await send(
+      chatId,
+      `😊 اسم شما
+      
+      ${memory[chatId].name}
+      
+      هست.`
+      );
+      
+      }else{
+      
+      await send(
+      chatId,
+      "❌ هنوز اسم خودت را به من نگفتی."
+      
+      );
+      
+      }
+      
+      }
+      else if(text.startsWith("سن من ")){
+
+        const age = text.replace("سن من ","");
+        
+        memory[chatId].age = age;
+        saveMemory();
+        
+        await send(
+        chatId,
+        "🎂 سنت ذخیره شد.");
+        
+        }
+        else if(text.startsWith("دوره من ")){
+
+          const course = text.replace("دوره من ","");
+          
+          memory[chatId].course = course;
+          
+          saveMemory();
+          
+          await send(
+          chatId,
+          `📚 دوره شما ذخیره شد:
+          
+          ${course}`
+          );
+          
+          }
+        
+        else if(text === "سن من چنده؟"){
+          
+        
+        if(memory[chatId].age){
+        
+        await send(
+        chatId,
+        `🎂 سن شما
+        
+        ${memory[chatId].age}
+        
+        سال است.`);
+        
+        }else{
+          
+        
+        await send(chatId,"سن خودت را نگفتی.");
+        
+        }
+        
+        }
   else{
+    
+    
 
     const answer = await askAI(text);
 
