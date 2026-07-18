@@ -1,158 +1,132 @@
 const fs = require("fs");
-const FILE = "./users.json";
 
+const file = "./database/register.json";
 
-class Register {
 
+if(!fs.existsSync(file)){
+    fs.writeFileSync(file,"[]");
+}
 
-    constructor(send){
 
-        this.send = send;
+let registrations = JSON.parse(
+    fs.readFileSync(file)
+);
 
-        this.users = this.load();
 
-        this.states = {};
+function save(){
 
-    }
+    fs.writeFileSync(
+        file,
+        JSON.stringify(registrations,null,2)
+    );
 
+}
 
 
-    load(){
 
-        if(!fs.existsSync(FILE)){
-            fs.writeFileSync(FILE,"[]");
-        }
+module.exports = {
 
-        return JSON.parse(
-            fs.readFileSync(FILE)
-        );
 
-    }
+start(chatId){
 
+return {
+    step:"name",
+    message:
+`📝 ثبت‌نام آموزشگاه زبان سپید
 
+لطفاً نام و نام خانوادگی خود را وارد کنید:`
+};
 
-    save(){
+},
 
-        fs.writeFileSync(
-            FILE,
-            JSON.stringify(
-                this.users,
-                null,
-                2
-            )
-        );
 
-    }
 
+process(chatId,text,state){
 
 
-    async start(chatId){
+if(state.step==="name"){
 
-        this.states[chatId] = {
-            step: "name",
-            data:{}
-        };
+state.name=text;
 
+state.step="phone";
 
-        await this.send(
-            chatId,
-            "📝 ثبت‌نام شروع شد\n\nنام و نام خانوادگی خود را وارد کنید:"
-        );
 
-    }
+return "📞 لطفاً شماره تماس خود را وارد کنید:";
 
+}
 
 
-    async process(chatId,text){
 
+if(state.step==="phone"){
 
-        let state = this.states[chatId];
+state.phone=text;
 
+state.step="course";
 
-        if(!state)
-            return false;
 
+return `
+📚 انتخاب دوره:
 
+1️⃣ مکالمه انگلیسی
 
-        if(state.step === "name"){
+2️⃣ آیلتس
 
+3️⃣ کلاس خصوصی
 
-            state.data.name = text;
+نام دوره را ارسال کنید:
+`;
 
-            state.step = "phone";
+}
 
 
-            await this.send(
-                chatId,
-                "📞 شماره تماس خود را وارد کنید:"
-            );
 
-            return true;
+if(state.step==="course"){
 
-        }
 
+state.course=text;
 
 
-        if(state.step === "phone"){
+registrations.push({
 
+chatId:chatId,
 
-            state.data.phone = text;
+name:state.name,
 
-            state.step = "course";
+phone:state.phone,
 
+course:state.course,
 
-            await this.send(
-                chatId,
-                "📚 دوره مورد نظر را انتخاب کنید:\n\nمبتدی\nمتوسط\nپیشرفته\nIELTS\nخصوصی"
-            );
+date:new Date()
 
+});
 
-            return true;
 
-        }
+save();
 
 
+state.step="done";
 
-        if(state.step === "course"){
 
+return `
+✅ ثبت‌نام شما با موفقیت انجام شد 🌱
 
-            state.data.course = text;
+👤 نام: ${state.name}
 
+📞 تماس: ${state.phone}
 
-            this.users.push({
+📚 دوره: ${state.course}
 
-                id: chatId,
+کارشناسان آموزشگاه با شما تماس خواهند گرفت.
+`;
 
-                ...state.data,
+}
 
-                date:new Date().toLocaleString("fa-IR")
 
-            });
-
-
-
-            this.save();
-
-
-            delete this.states[chatId];
-
-
-            await this.send(
-                chatId,
-                "✅ ثبت‌نام شما با موفقیت انجام شد.\n\nکارشناسان آموزشگاه با شما تماس می‌گیرند."
-            );
-
-
-            return true;
-
-        }
-
-
-    }
-
+return null;
 
 
 }
 
 
-module.exports = Register;
+
+};
