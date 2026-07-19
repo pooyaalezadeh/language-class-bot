@@ -375,78 +375,88 @@ async function send(chatId,text){
   
   
   
-  async function askAI(question){
-  
-  try{
-  
-  
-  const response = await axios.post(
-  
-  "https://openrouter.ai/api/v1/chat/completions",
-  
-  {
-  
-  model:"qwen/qwen3-8b:free",
-  
-  messages:[
-  
-  {
-  role:"system",
-  content:
-  "تو دستیار هوشمند آموزشگاه زبان سپید هستی. فارسی و دوستانه پاسخ بده."
-  },
-  
-  {
-  role:"user",
-  content:question
-  }
-  
-  ]
-  
-  },
-  
-  {
-  
-  headers:{
-  
-  Authorization:
-  `Bearer ${process.env.AI_KEY}`,
-  
-  "Content-Type":
-  "application/json",
-  
-  "HTTP-Referer":
-  "https://language-class-bot-2.onrender.com",
-  
-  "X-Title":
-  "Language Sefid Bot"
-  
-  }
-  
-  }
-  
-  );
-  
-  
-  return response.data.choices[0].message.content;
-  
-  
-  }catch(error){
-  
-  
-  console.log(
-  "AI ERROR:",
-  error.response?.data || error.message
-  );
-  
-  
-  return "فعلاً پاسخ هوشمند در دسترس نیست 😊";
-  
-  
-  }
-  
-  }
-  
+ async function askAI(question){
+
+question = question.toLowerCase();
+
+
+if(question.includes("سلام") || question.includes("hello")){
+
+return `
+سلام 😊🌱
+
+به ربات آموزشگاه زبان سپید خوش آمدید.
+
+می‌توانید از منو:
+📚 کلاس‌ها
+💰 شهریه
+📝 ثبت‌نام
+🎮 بازی تتریس
+
+را انتخاب کنید.
+`;
+
+}
+
+
+if(question.includes("شهریه") || question.includes("قیمت")){
+
+return `
+💰 شهریه دوره‌ها:
+
+🇬🇧 آیلتس:
+3,000,000 تومان
+
+👨‍🏫 کلاس خصوصی:
+2,000,000 تومان
+
+📝 کلاس جبرانی:
+700,000 تومان
+`;
+
+}
+
+
+if(question.includes("کلاس") || question.includes("دوره")){
+
+return `
+📚 دوره‌های آموزشگاه زبان سپید:
+
+🇬🇧 مکالمه انگلیسی
+📖 گرامر و واژگان
+🎯 آمادگی آیلتس
+
+برای ثبت‌نام از منوی ربات استفاده کنید.
+`;
+
+}
+
+
+if(question.includes("استاد") || question.includes("معلم")){
+
+return `
+👩‍🏫 مدرس:
+مریم بقایی
+
+آموزش زبان انگلیسی از سطح پایه تا پیشرفته.
+`;
+
+}
+
+
+return `
+😊 سوال شما دریافت شد.
+
+برای راهنمایی بهتر از منوی ربات استفاده کنید:
+
+📚 کلاس‌ها
+📝 ثبت‌نام
+💰 شهریه
+🎮 بازی تتریس
+📍 نقشه آموزشگاه
+`;
+
+}
   
   
   
@@ -775,7 +785,23 @@ async function send(chatId,text){
   
   
   
-  
+  else if(text==="📍 نقشه آموزشگاه"){
+
+await send(
+chatId,
+`
+📍 آدرس آموزشگاه زبان سپید:
+
+باغ فیض، کوچه چهارم
+
+🗺 لینک مشاهده روی نقشه:
+https://maps.google.com/?q=باغ+فیض+کوچه+چهارم
+
+😊 منتظر دیدار شما هستیم.
+`
+);
+
+}
   else if(text==="📝 ثبت‌نام"){
   
   
