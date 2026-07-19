@@ -191,7 +191,7 @@ mainKeyboard:[
 
 ["🎯 تعیین سطح"],
 
-["🏆 رتبه‌بندی"]
+["🏆 رتبه‌بندی","🌱 جمله انگیزشی"]
 
 ]
 
@@ -899,7 +899,19 @@ https://maps.google.com/?q=باغ+فیض+کوچه+چهارم
   
   
   
-  
+  else if(text==="🌱 جمله انگیزشی"){
+
+let m =
+motivations[
+Math.floor(Math.random()*motivations.length)
+];
+
+await send(
+chatId,
+m
+);
+
+}
   else if(text==="🏆 رتبه‌بندی"){
   
   
