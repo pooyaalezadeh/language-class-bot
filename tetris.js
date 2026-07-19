@@ -5,10 +5,10 @@ module.exports = function(){
     
     برای شروع بازی روی لینک زیر بزنید:
     
-    https://language-class-bot-2.onrender.com/games/tetris/index.html
+    https://language-class-bot-2.onrender.com/index.html
     
     🎯 هدف:
     با بازی کردن لغات انگلیسی را تمرین کن و امتیاز بگیر.
     `;
     
-    };
+};
