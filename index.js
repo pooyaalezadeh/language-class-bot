@@ -5,9 +5,7 @@ const fs = require("fs");
 const cron = require("node-cron");
 const express = require("express");
 
-
-const tetris = require("./features/tetris");
-
+const tetris = require("./tetris");
 
 /* ================= DATABASE ================= */
 
