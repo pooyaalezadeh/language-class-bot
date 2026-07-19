@@ -1062,7 +1062,7 @@ cron.schedule(
   
   
   // تست سلامت
-  
+   app.use(express.static(__dirname));
   app.get("/health",(req,res)=>{
   
   
